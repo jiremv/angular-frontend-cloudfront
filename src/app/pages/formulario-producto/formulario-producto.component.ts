@@ -1,0 +1,85 @@
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ProductoService } from '../../services/producto.service';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { Producto } from '../../models/producto.model';
+import { MatCardModule } from '@angular/material/card';
+
+@Component({
+  selector: 'app-formulario-producto',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatCardModule
+  ],
+  templateUrl: './formulario-producto.component.html',
+  styleUrls: ['./formulario-producto.component.scss']
+})
+export class FormularioProductoComponent implements OnInit {
+  form!: FormGroup;
+  id?: string;
+
+  constructor(
+    private fb: FormBuilder,
+    private route: ActivatedRoute,
+    private router: Router,
+    private service: ProductoService
+  ) {
+    const today = new Date().toISOString().split('T')[0];
+    this.form = this.fb.group({
+      productoId: ['', Validators.required],
+      nombre: ['', Validators.required],
+      categoria: ['', Validators.required],
+      precio: [0, [Validators.required, Validators.min(0)]],
+      fechaCreacion: [today, Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    this.id = this.route.snapshot.paramMap.get('id') ?? undefined;
+
+    if (this.id) {
+      this.service.obtener(this.id).subscribe(response => {
+        const producto = response.data?.producto;
+        if (producto) {
+          this.form.patchValue(producto);
+          this.form.get('productoId')?.disable(); // Deshabilita productoId en edición
+        } else {
+          console.error('No se encontró el producto en la respuesta');
+        }
+      });
+    }
+  }
+
+  guardar(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.form.getRawValue();
+    formValue.fechaCreacion = formValue.fechaCreacion?.toISOString?.().split('T')[0] || formValue.fechaCreacion;
+
+    if (this.id) {
+      this.service.actualizar(this.id, formValue).subscribe(() => this.router.navigate(['/']));
+    } else {
+      this.service.crear(formValue).subscribe(() => this.router.navigate(['/']));
+    }
+  }
+  
+  volver(): void {
+    this.router.navigate(["/"]);
+  }  
+}
