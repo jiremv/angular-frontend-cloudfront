@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Infraestructura para frontend Angular (S3 + CloudFront)
+
+Resources:
+
+  AngularFrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AngularFrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "${AngularFrontendBucket.Arn}/*"
+
+  AngularCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - DomainName: !GetAtt AngularFrontendBucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          ForwardedValues:
+            QueryString: false
+        PriceClass: PriceClass_100
+
+Outputs:
+
+  BucketName:
+    Value: !Ref AngularFrontendBucket
+    Description: Nombre del bucket S3
+
+  CloudFrontDistributionId:
+    Value: !Ref AngularCloudFrontDistribution
+    Description: ID de la distribución CloudFront
+
+  CloudFrontDomainName:
+    Value: !GetAtt AngularCloudFrontDistribution.DomainName
+    Description: URL del sitio distribuido por CloudFront
