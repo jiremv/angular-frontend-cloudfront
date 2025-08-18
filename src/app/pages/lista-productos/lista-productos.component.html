@@ -1,4 +1,19 @@
+<div style="display: flex; justify-content: space-between; align-items: center;">
 <h2>Lista de Productos</h2>
+<h6>DynamoDB</h6>
+<h6>Amazon Cloudfront</h6>
+  <mat-form-field appearance="fill" style="width: 300px;">
+    <mat-label>AWS Api Gateway</mat-label>
+    <mat-select (selectionChange)="abrirRepositorio($event.value)">
+      <mat-option [value]="'https://github.com/jiremv/node-backend-nestjs'">
+        Node Backend (NestJS)
+      </mat-option>
+      <mat-option [value]="'https://github.com/jiremv/java-backend-quarkus'">
+        Java Backend (Quarkus)
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  </div>
 <button mat-raised-button color="primary" (click)="nuevo()">Nuevo Producto</button>
 <table mat-table [dataSource]="productos" class="mat-elevation-z8">
   <ng-container matColumnDef="productoId">
